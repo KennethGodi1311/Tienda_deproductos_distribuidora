@@ -608,62 +608,55 @@ def require_login():
         st.stop()
 
 
-# -------------------------
-# SIDEBAR
-# -------------------------
-st.sidebar.title("🛒 SUPERMERCADO POS")
+# =========================
+# PUBLICO + AUTH
+# =========================
+st.sidebar.markdown("### 🧭 Público")
+
+if st.sidebar.button("🏠 Inicio"):
+    inicio()
+
+if st.sidebar.button("🛍️ Productos"):
+    productos()
+
+if st.sidebar.button("🔥 Ofertas"):
+    ofertas()
+
+if st.sidebar.button("ℹ️ Acerca"):
+    acerca()
+
+if st.sidebar.button("📞 Contacto"):
+    contacto()
+
+st.sidebar.markdown("---")
+
+if st.sidebar.button("🔐 Login"):
+    st.session_state["auth_view"] = "login"
+    st.rerun()
+
+if st.sidebar.button("📝 Crear cuenta"):
+    st.session_state["auth_view"] = "registro"
+    st.rerun()
 
 # =========================
-# PUBLICO (SIN LOGIN)
+# AUTH FLOW (IMPORTANTE)
 # =========================
 if not st.session_state["login"]:
 
-    st.sidebar.markdown("### 🧭 Público")
-
-    if st.sidebar.button("🏠 Inicio"):
-        inicio()
-
-    if st.sidebar.button("🛍️ Productos"):
-        productos()   # 👈 ahora SÍ es público
-
-    if st.sidebar.button("🔥 Ofertas"):
-        ofertas()     # 👈 ahora SÍ es público
-
-    if st.sidebar.button("ℹ️ Acerca"):
-        acerca()
-
-    if st.sidebar.button("📞 Contacto"):
-        contacto()
-
-    st.sidebar.markdown("---")
-
-    if st.sidebar.button("🔐 Login"):
-        st.session_state["auth_view"] = "login"
-        st.rerun()
-
-    if st.sidebar.button("📝 Crear cuenta"):
-        st.session_state["auth_view"] = "registro"
-        st.rerun()
-
-    
-# -------------------------
-# AUTH FLOW LIMPIO
-# -------------------------
-if not st.session_state["login"]:
-
-    if st.session_state["auth_view"] == "registro":
+    if st.session_state.get("auth_view") == "registro":
         registro()
-
-
+        
     else:
         login()
 
     st.stop()
 
 # =========================
-# PRIVADO
+# SIDEBAR
 # =========================
-else:
+st.sidebar.title("🛒 SUPERMERCADO POS")
+
+if st.session_state["login"]:
 
     st.sidebar.markdown(f"👤 {st.session_state['user']}")
 
@@ -684,9 +677,8 @@ else:
 
     if st.sidebar.button("🚪 Cerrar sesión"):
         st.session_state["login"] = False
-        st.session_state["user"] = None
-        st.session_state["rol"] = None
+
         st.session_state["auth_view"] = "login"
         st.rerun()
 
-        
+    st.stop()
