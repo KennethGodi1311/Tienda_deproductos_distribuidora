@@ -14,6 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
+
 # 🔥 FIX GLOBAL
 st.markdown("""
 <style>
