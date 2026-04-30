@@ -443,27 +443,32 @@ def contacto():
 # -------------------------
 # CONTROL SEGURO INICIAL
 # -------------------------
-# -------------------------
-# CONTROL AUTH SEGURO
-# -------------------------
+import streamlit as st
+import bcrypt
 
+# LOGIN
+if "login" not in st.session_state:
+    st.session_state["login"] = False
+
+# USUARIO ACTUAL
+if "user" not in st.session_state:
+    st.session_state["user"] = None
+
+# ROL
+if "rol" not in st.session_state:
+    st.session_state["rol"] = None
+
+# VISTA PRINCIPAL (MENÚ)
+if "view" not in st.session_state:
+    st.session_state["view"] = "inicio"
+
+# VISTA AUTH (login / registro)
 if "auth_view" not in st.session_state:
-    st.session_state["auth_view"] = "login"
+    st.session_state["auth_view"] = None
 
-if not st.session_state["login"]:
-
-    # 🔥 SOLO UNA VISTA A LA VEZ (IMPORTANTE)
-    if st.session_state["auth_view"] == "login":
-        login()
-
-    elif st.session_state["auth_view"] == "registro":
-        registro()
-
-    else:
-        st.session_state["auth_view"] = "login"
-        login()
-
-    st.stop()   # 🔥 CLAVE: evita doble render
+# CARRITO
+if "carrito" not in st.session_state:
+    st.session_state["carrito"] = []
 
 
 # -------------------------
@@ -593,7 +598,7 @@ def registro():
         st.session_state["auth_view"] = "login"
         st.rerun()
 
-
+        
 # -------------------------
 # PROTECCIÓN REAL
 # -------------------------
@@ -641,15 +646,19 @@ if not st.session_state["login"]:
         st.rerun()
 
     
+# -------------------------
+# AUTH FLOW LIMPIO
+# -------------------------
 if not st.session_state["login"]:
 
     if st.session_state["auth_view"] == "registro":
         registro()
-        st.stop()
 
-    elif st.session_state["auth_view"] == "login":
+
+    else:
         login()
-        st.stop()
+
+    st.stop()
 
 # =========================
 # PRIVADO
