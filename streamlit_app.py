@@ -478,13 +478,17 @@ def login():
 
     st.markdown("## 🔐 Bienvenido de nuevo")
 
-    user = st.text_input("👤 Usuario")
-    pwd = st.text_input("🔑 Contraseña", type="password")
+    user = st.text_input("👤 Usuario", key="login_user")
+    pwd = st.text_input("🔑 Contraseña", type="password", key="login_pass")
 
     col1, col2 = st.columns(2)
 
     with col1:
         if st.button("🚀 Ingresar"):
+
+            if not user or not pwd:
+                st.error("Completa usuario y contraseña")
+                return
 
             conexion = conectar()
             cursor = conexion.cursor()
@@ -497,33 +501,33 @@ def login():
             data = cursor.fetchone()
             conexion.close()
 
-            if data:
-
-                hashed_pw, rol = data
-
-                if isinstance(hashed_pw, str):
-                    hashed_pw = hashed_pw.encode()
-
-                if bcrypt.checkpw(pwd.encode(), hashed_pw):
-
-                    st.session_state["login"] = True
-                    st.session_state["user"] = user
-                    st.session_state["rol"] = rol
-                    st.session_state["auth_view"] = None
-
-                    st.success("✔ Login correcto")
-                    st.rerun()
-
-                else:
-                    st.error("❌ Contraseña incorrecta")
-            else:
+            if not data:
                 st.error("❌ Usuario no existe")
+                return
+
+            hashed_pw, rol = data
+
+            # 🔥 FIX robusto bcrypt (evita errores string/bytes)
+            if isinstance(hashed_pw, str):
+                hashed_pw = hashed_pw.encode()
+
+            if bcrypt.checkpw(pwd.encode(), hashed_pw):
+
+                st.session_state["login"] = True
+                st.session_state["user"] = user
+                st.session_state["rol"] = rol
+                st.session_state["auth_view"] = None
+
+                st.success("✔ Login correcto")
+                st.rerun()
+
+            else:
+                st.error("❌ Contraseña incorrecta")
 
     with col2:
         if st.button("📝 Crear cuenta"):
             st.session_state["auth_view"] = "registro"
             st.rerun()
-
 
 # -------------------------
 # REGISTRO (VALIDADO)
@@ -532,13 +536,18 @@ def registro():
 
     st.markdown("## 📝 Crear nueva cuenta")
 
-    new_user = st.text_input("👤 Usuario")
-
-    new_pass = st.text_input("🔑 Contraseña", type="password")
-
-    rol = st.selectbox("🎭 Rol", ["empleado", "admin"])
+    new_user = st.text_input("👤 Usuario", key="reg_user")
+    new_pass = st.text_input("🔑 Contraseña", type="password", key="reg_pass")
+    rol = st.selectbox("🎭 Rol", ["empleado", "admin"], key="reg_rol")
 
     if st.button("💾 Registrar"):
+
+        # -------------------------
+        # VALIDACIONES
+        # -------------------------
+        if not new_user or not new_pass:
+            st.error("Completa todos los campos")
+            return
 
         if len(new_user) < 4:
             st.error("Usuario muy corto (mínimo 4)")
@@ -552,8 +561,14 @@ def registro():
             st.error("Solo letras y números en contraseña")
             return
 
+        # -------------------------
+        # HASH PASSWORD
+        # -------------------------
         hashed = bcrypt.hashpw(new_pass.encode(), bcrypt.gensalt())
 
+        # -------------------------
+        # DB INSERT
+        # -------------------------
         conexion = conectar()
         cursor = conexion.cursor()
 
@@ -563,21 +578,27 @@ def registro():
                 (new_user, hashed, rol)
             )
             conexion.commit()
-            st.success("✔ Usuario creado")
 
+            st.success("✔ Usuario creado correctamente")
+
+            # 🔥 volver al login de forma segura
             st.session_state["auth_view"] = "login"
             st.rerun()
 
-        except:
+        except Exception as e:
             st.error("❌ Usuario ya existe")
 
-        conexion.close()
+        finally:
+            conexion.close()
 
+    # -------------------------
+    # BOTÓN VOLVER
+    # -------------------------
     if st.button("⬅ Volver al login"):
         st.session_state["auth_view"] = "login"
         st.rerun()
 
-
+        
 # -------------------------
 # PROTECCIÓN REAL
 # -------------------------
