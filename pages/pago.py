@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime
 from utils.factura import generar_factura
-from database.db import guardar_venta  # 🔥 NUEVO
+from database.db import guardar_venta
 
 def pago():
     """
@@ -43,56 +43,92 @@ def pago():
         )
 
     st.success(f"Total: ₡{total}")
-
     st.divider()
 
     # -------------------------
-    # FORMULARIO DE PAGO
+    # MÉTODO DE PAGO
     # -------------------------
-    st.subheader("💳 Datos de pago")
+    st.subheader("💳 Método de pago")
 
-    nombre = st.text_input("Nombre en la tarjeta")
-    tarjeta = st.text_input("Número de tarjeta")
-    fecha = st.text_input("Fecha expiración (MM/AA)")
-    cvv = st.text_input("CVV", type="password")
+    metodo = st.selectbox("Selecciona cómo pagar", ["Tarjeta", "SINPE", "Efectivo"])
 
-    metodo = st.selectbox("Método de pago", ["Tarjeta", "SINPE", "Efectivo"])
+    # VARIABLES
+    nombre = tarjeta = fecha = cvv = telefono = None
+
+    # -------------------------
+    # CAMPOS DINÁMICOS
+    # -------------------------
+    if metodo == "Tarjeta":
+
+        st.markdown("### 💳 Pago con tarjeta")
+
+        nombre = st.text_input("Nombre en la tarjeta")
+        tarjeta = st.text_input("Número de tarjeta")
+        fecha = st.text_input("Fecha expiración (MM/AA)")
+        cvv = st.text_input("CVV", type="password")
+
+    elif metodo == "SINPE":
+
+        st.markdown("### 📱 Pago con SINPE")
+
+        telefono = st.text_input("Número de teléfono SINPE")
+        st.info("Se enviará una solicitud de pago al número indicado")
+
+    elif metodo == "Efectivo":
+
+        st.markdown("### 💵 Pago en efectivo")
+        st.info("Pagarás al recibir el pedido")
 
     # -------------------------
     # CONFIRMAR PAGO
     # -------------------------
     if st.button("✅ Confirmar pago"):
 
-        # VALIDACIONES
-        if not nombre or not tarjeta or not fecha or not cvv:
-            st.error("Completa todos los datos")
-            return
+        # VALIDACIONES SEGÚN MÉTODO
+        if metodo == "Tarjeta":
+            if not nombre or not tarjeta or not fecha or not cvv:
+                st.error("Completa todos los datos de la tarjeta")
+                return
+
+        elif metodo == "SINPE":
+            if not telefono:
+                st.error("Ingresa el número SINPE")
+                return
 
         with st.spinner("Procesando pago..."):
 
             # -------------------------
-            # GUARDAR VENTA EN BD
+            # GUARDAR VENTA
             # -------------------------
             guardar_venta(st.session_state["carrito"])
 
             # -------------------------
-            # GENERAR FACTURA PDF
+            # GENERAR FACTURA
             # -------------------------
             generar_factura(st.session_state["carrito"], total)
 
-            st.success("🎉 Pago realizado con éxito")
+            # -------------------------
+            # MENSAJE SEGÚN MÉTODO
+            # -------------------------
+            if metodo == "Tarjeta":
+                st.success("💳 Pago con tarjeta aprobado")
+
+            elif metodo == "SINPE":
+                st.success(f"📱 Solicitud SINPE enviada al {telefono}")
+
+            elif metodo == "Efectivo":
+                st.success("💵 Pedido registrado para pago en efectivo")
+
             st.balloons()
 
             # -------------------------
             # LIMPIAR CARRITO
             # -------------------------
             st.session_state["carrito"] = []
-
-            # Guardar última compra
             st.session_state["ultima_compra"] = datetime.now()
 
             # -------------------------
-            # BOTÓN DESCARGAR FACTURA
+            # DESCARGAR FACTURA
             # -------------------------
             with open("factura.pdf", "rb") as file:
                 st.download_button(
