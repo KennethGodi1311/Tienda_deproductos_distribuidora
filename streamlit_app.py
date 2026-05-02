@@ -10,9 +10,9 @@ from pages.ofertas import ofertas
 from pages.acerca import acerca
 from pages.contacto import contacto
 from pages.chatbot import chatbot
-from pages.carrito import carrito       # ✅ NUEVO
-from pages.pago import pago    
-from pages.dashboard import dashboard         # ✅ NUEVO
+from pages.carrito import carrito
+from pages.pago import pago
+from pages.dashboard import dashboard
 
 from utils.styles import load_styles
 
@@ -24,6 +24,13 @@ st.set_page_config(
     layout="wide",
     page_icon="🐉"
 )
+
+# 🔥 OCULTAR MENÚ AUTOMÁTICO DE STREAMLIT
+st.markdown("""
+<style>
+[data-testid="stSidebarNav"] {display: none;}
+</style>
+""", unsafe_allow_html=True)
 
 # =========================
 # INIT
@@ -46,6 +53,13 @@ defaults = {
 for key, value in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
+
+# =========================
+# FUNCIÓN NAVEGACIÓN
+# =========================
+def ir(pagina):
+    st.session_state["page"] = pagina
+    st.rerun()
 
 # =========================
 # AUTH FLOW
@@ -74,22 +88,22 @@ if st.session_state["login"]:
     st.sidebar.markdown("### 🧭 Navegación")
 
     if st.sidebar.button("🏠 Inicio"):
-        st.session_state["page"] = "inicio"
+        ir("inicio")
 
     if st.sidebar.button("🛍️ Productos"):
-        st.session_state["page"] = "productos"
+        ir("productos")
 
     if st.sidebar.button("🔥 Ofertas"):
-        st.session_state["page"] = "ofertas"
+        ir("ofertas")
 
     if st.sidebar.button("ℹ️ Acerca"):
-        st.session_state["page"] = "acerca"
+        ir("acerca")
 
     if st.sidebar.button("📞 Contacto"):
-        st.session_state["page"] = "contacto"
+        ir("contacto")
 
     if st.sidebar.button("🤖 Chatbot"):
-        st.session_state["page"] = "chatbot"
+        ir("chatbot")
 
     st.sidebar.markdown("---")
 
@@ -98,13 +112,13 @@ if st.session_state["login"]:
         st.sidebar.markdown("### ⚙️ Administración")
 
         if st.sidebar.button("📦 Inventario"):
-            st.session_state["page"] = "inventario"
+            ir("inventario")
 
         if st.sidebar.button("💰 Ventas"):
-            st.session_state["page"] = "ventas"
+            ir("ventas")
 
         if st.sidebar.button("📊 Dashboard"):
-            st.session_state["page"] = "dashboard"
+            ir("dashboard")
 
     st.sidebar.markdown("---")
 
@@ -113,15 +127,20 @@ if st.session_state["login"]:
     st.sidebar.metric("Productos", len(st.session_state["carrito"]))
 
     if st.sidebar.button("Ver carrito"):
-        st.session_state["page"] = "carrito"
+        ir("carrito")
 
     if st.sidebar.button("Ir a pagar"):
-        st.session_state["page"] = "pago"
+        ir("pago")
 
-    # LOGOUT
+    # 🚪 LOGOUT (corregido)
     if st.sidebar.button("🚪 Cerrar sesión"):
-        st.session_state.clear()
+        for key in ["login", "user", "rol"]:
+            st.session_state[key] = None
+
+        st.session_state["login"] = False
         st.session_state["auth_view"] = "login"
+        st.session_state["page"] = "inicio"
+
         st.rerun()
 
 # -------------------------
@@ -132,22 +151,22 @@ else:
     st.sidebar.info("Modo público")
 
     if st.sidebar.button("🏠 Inicio"):
-        st.session_state["page"] = "inicio"
+        ir("inicio")
 
     if st.sidebar.button("🛍️ Productos"):
-        st.session_state["page"] = "productos"
+        ir("productos")
 
     if st.sidebar.button("🔥 Ofertas"):
-        st.session_state["page"] = "ofertas"
+        ir("ofertas")
 
     if st.sidebar.button("ℹ️ Acerca"):
-        st.session_state["page"] = "acerca"
+        ir("acerca")
 
     if st.sidebar.button("📞 Contacto"):
-        st.session_state["page"] = "contacto"
+        ir("contacto")
 
     if st.sidebar.button("🤖 Chatbot"):
-        st.session_state["page"] = "chatbot"
+        ir("chatbot")
 
     st.sidebar.markdown("---")
 
@@ -160,7 +179,7 @@ else:
         st.rerun()
 
 # =========================
-# ROUTER (NAVEGACIÓN)
+# ROUTER
 # =========================
 page = st.session_state["page"]
 
@@ -182,7 +201,6 @@ elif page == "contacto":
 elif page == "chatbot":
     chatbot()
 
-# 🔥 NUEVAS PÁGINAS REALES
 elif page == "carrito":
     carrito()
 
@@ -190,9 +208,11 @@ elif page == "pago":
     pago()
 
 elif page == "dashboard":
-    dashboard()
+    if st.session_state["rol"] == "admin":
+        dashboard()
+    else:
+        st.error("🚫 No autorizado")
 
-# ADMIN
 elif page == "inventario":
     st.title("📦 Inventario (admin)")
     st.info("Próximamente...")
@@ -201,10 +221,4 @@ elif page == "ventas":
     st.title("💰 Ventas (admin)")
     st.info("Próximamente...")
 
-elif page == "dashboard":
-    st.title("📊 Dashboard (admin)")
-    st.info("Próximamente...")
-
-elif page == "pago":
-    from pages.pago import pago
-    pago()
+    
