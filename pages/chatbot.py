@@ -18,7 +18,7 @@ def chatbot():
         st.session_state["mostrar_carrito"] = False
 
     # -------------------------
-    # UI CARRITO (NUEVO)
+    # UI CARRITO (MEJORADO)
     # -------------------------
     def mostrar_carrito_ui():
 
@@ -61,22 +61,29 @@ def chatbot():
 
             st.divider()
 
+        # Guardar total global
+        st.session_state["total"] = total
+
         st.success(f"💰 Total: ₡{total}")
 
         col1, col2, col3 = st.columns(3)
 
+        # Vaciar carrito
         if col1.button("🧹 Vaciar carrito"):
             st.session_state["carrito"] = []
             st.rerun()
 
+        # Volver
         if col2.button("🏠 Volver inicio"):
             st.session_state["page"] = "inicio"
+            st.session_state["mostrar_carrito"] = False
             st.rerun()
 
-        if col3.button("💳 Comprar"):
-            st.success("Compra realizada (demo)")
-            st.session_state["carrito"] = []
-            st.balloons()
+        # Ir a pago REAL 🔥
+        if col3.button("💳 Ir a pagar"):
+            st.session_state["page"] = "pago"
+            st.session_state["mostrar_carrito"] = False
+            st.rerun()
 
     # -------------------------
     # RESPONDER
@@ -93,7 +100,7 @@ def chatbot():
             "pan": 500
         }
 
-        # AGREGAR
+        # AGREGAR PRODUCTOS
         for nombre, precio in productos.items():
             if f"agregar {nombre}" in p:
 
@@ -105,7 +112,7 @@ def chatbot():
 
                 return f"🛒 {nombre.capitalize()} agregado al carrito"
 
-        # MOSTRAR CARRITO UI
+        # MOSTRAR CARRITO
         if "carrito" in p:
             st.session_state["mostrar_carrito"] = True
             return "🛒 Abriendo carrito..."
@@ -122,7 +129,7 @@ def chatbot():
 
         # SALUDO
         if any(x in p for x in ["hola", "buenas", "hey"]):
-            return "👋 Hola, escribe 'carrito' para ver tus productos"
+            return "👋 Hola, puedes escribir 'carrito' para ver tu compra"
 
         # INFO
         if "producto" in p:
@@ -175,13 +182,14 @@ Puedes escribir:
         st.rerun()
 
     # -------------------------
-    # MOSTRAR CARRITO VISUAL
+    # MOSTRAR CARRITO
     # -------------------------
     if st.session_state["mostrar_carrito"]:
+        st.divider()
         mostrar_carrito_ui()
 
     # -------------------------
-    # BOTONES
+    # BOTONES EXTRA
     # -------------------------
     col1, col2 = st.columns(2)
 

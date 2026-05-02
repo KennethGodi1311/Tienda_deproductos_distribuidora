@@ -2,12 +2,18 @@ import streamlit as st
 from database.db import init_db
 from auth.login import login
 from auth.registro import registro
+
+# Páginas
 from pages.inicio import inicio
 from pages.productos import productos
 from pages.ofertas import ofertas
 from pages.acerca import acerca
 from pages.contacto import contacto
-from pages.chatbot import chatbot  # ✅ NUEVO
+from pages.chatbot import chatbot
+from pages.carrito import carrito       # ✅ NUEVO
+from pages.pago import pago    
+from pages.dashboard import dashboard         # ✅ NUEVO
+
 from utils.styles import load_styles
 
 # =========================
@@ -28,23 +34,18 @@ init_db()
 # =========================
 # SESSION STATE
 # =========================
-if "login" not in st.session_state:
-    st.session_state["login"] = False
+defaults = {
+    "login": False,
+    "user": None,
+    "rol": None,
+    "auth_view": None,
+    "page": "inicio",
+    "carrito": [],
+}
 
-if "user" not in st.session_state:
-    st.session_state["user"] = None
-
-if "rol" not in st.session_state:
-    st.session_state["rol"] = None
-
-if "auth_view" not in st.session_state:
-    st.session_state["auth_view"] = None
-
-if "page" not in st.session_state:
-    st.session_state["page"] = "inicio"
-
-if "carrito" not in st.session_state:
-    st.session_state["carrito"] = []
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
 # =========================
 # AUTH FLOW
@@ -87,13 +88,12 @@ if st.session_state["login"]:
     if st.sidebar.button("📞 Contacto"):
         st.session_state["page"] = "contacto"
 
-    # 🤖 NUEVO CHATBOT
     if st.sidebar.button("🤖 Chatbot"):
         st.session_state["page"] = "chatbot"
 
     st.sidebar.markdown("---")
 
-    # 🔥 SOLO ADMIN
+    # ADMIN
     if st.session_state["rol"] == "admin":
         st.sidebar.markdown("### ⚙️ Administración")
 
@@ -110,12 +110,15 @@ if st.session_state["login"]:
 
     # 🛒 CARRITO
     st.sidebar.markdown("### 🛒 Carrito")
-    st.sidebar.write(f"Productos: {len(st.session_state['carrito'])}")
+    st.sidebar.metric("Productos", len(st.session_state["carrito"]))
 
     if st.sidebar.button("Ver carrito"):
         st.session_state["page"] = "carrito"
 
-    # 🚪 LOGOUT
+    if st.sidebar.button("Ir a pagar"):
+        st.session_state["page"] = "pago"
+
+    # LOGOUT
     if st.sidebar.button("🚪 Cerrar sesión"):
         st.session_state.clear()
         st.session_state["auth_view"] = "login"
@@ -143,7 +146,6 @@ else:
     if st.sidebar.button("📞 Contacto"):
         st.session_state["page"] = "contacto"
 
-    # 🤖 CHATBOT TAMBIÉN EN PÚBLICO
     if st.sidebar.button("🤖 Chatbot"):
         st.session_state["page"] = "chatbot"
 
@@ -160,7 +162,7 @@ else:
 # =========================
 # ROUTER (NAVEGACIÓN)
 # =========================
-page = st.session_state.get("page", "inicio")
+page = st.session_state["page"]
 
 if page == "inicio":
     inicio()
@@ -177,14 +179,20 @@ elif page == "acerca":
 elif page == "contacto":
     contacto()
 
-elif page == "chatbot":  # ✅ NUEVO
+elif page == "chatbot":
     chatbot()
 
-# 🔥 PÁGINAS FUTURAS
+# 🔥 NUEVAS PÁGINAS REALES
 elif page == "carrito":
-    st.title("🛒 Carrito")
-    st.write(st.session_state["carrito"])
+    carrito()
 
+elif page == "pago":
+    pago()
+
+elif page == "dashboard":
+    dashboard()
+
+# ADMIN
 elif page == "inventario":
     st.title("📦 Inventario (admin)")
     st.info("Próximamente...")
@@ -196,3 +204,7 @@ elif page == "ventas":
 elif page == "dashboard":
     st.title("📊 Dashboard (admin)")
     st.info("Próximamente...")
+
+elif page == "pago":
+    from pages.pago import pago
+    pago()
