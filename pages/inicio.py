@@ -7,7 +7,9 @@ def inicio():
 
     st.divider()
 
-    # Estado categoría
+    # -------------------------
+    # ESTADO
+    # -------------------------
     if "categoria" not in st.session_state:
         st.session_state["categoria"] = "Todos"
 
@@ -73,15 +75,28 @@ def inicio():
             continue
 
         with cols[index % 3]:
+
             st.markdown(f"""
-            <div class="card">
+            <div style="
+                background:#1e293b;
+                padding:15px;
+                border-radius:12px;
+                border:1px solid #334155;
+                margin-bottom:10px;
+                text-align:center;
+            ">
                 <h4>{p["nombre"]}</h4>
-                <p>💰 ₡{p["precio"]}</p>
+                <p style="font-size:18px;">💰 ₡{p["precio"]}</p>
                 <small>{p["cat"]}</small>
             </div>
             """, unsafe_allow_html=True)
 
-            if st.button("Comprar", key=p["nombre"]):
+            if st.button("🛒 Comprar", key=p["nombre"]):
+                st.session_state["carrito"].append({
+                    "producto": p["nombre"],
+                    "precio": p["precio"],
+                    "cantidad": 1
+                })
                 st.success(f"{p['nombre']} agregado ✔️")
 
         index += 1
@@ -93,6 +108,7 @@ def inicio():
     st.subheader("🔥 Ofertas del día")
 
     col1, col2 = st.columns(2)
+
     col1.success("🍚 Arroz ₡1200")
     col2.warning("🥖 Pan ₡600")
 
@@ -102,6 +118,7 @@ def inicio():
     st.divider()
 
     col1, col2, col3 = st.columns(3)
+
     col1.info("📍 Barrio Chino, San José")
     col2.info("☎ 2230-5698")
     col3.info("🕒 7:00 AM - 9:00 PM")
