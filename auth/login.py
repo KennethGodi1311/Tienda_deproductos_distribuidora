@@ -78,8 +78,6 @@ def login():
         if st.button("📝 Crear cuenta"):
             st.session_state["auth_view"] = "registro"
             st.rerun()
-
-        if st.button("🏠 Ir al inicio"):
             st.session_state["auth_view"] = None
             st.session_state["page"] = "inicio"
             st.rerun()

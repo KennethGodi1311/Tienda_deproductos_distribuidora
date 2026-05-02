@@ -91,8 +91,6 @@ def registro():
         if st.button("⬅ Volver al login"):
             st.session_state["auth_view"] = "login"
             st.rerun()
-
-        if st.button("🏠 Ir al inicio"):
             st.session_state["auth_view"] = None
             st.session_state["page"] = "inicio"
             st.rerun()
