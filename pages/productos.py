@@ -1,4 +1,6 @@
 import streamlit as st
+import os
+from PIL import Image
 
 def productos():
 
@@ -9,6 +11,40 @@ def productos():
     # -------------------------
     if "carrito" not in st.session_state:
         st.session_state["carrito"] = []
+
+    # -------------------------
+    # 🔥 FUNCIÓN IMAGEN UNIFORME
+    # -------------------------
+    def cargar_imagen_uniforme(ruta, size=(300, 300)):
+        try:
+            img = Image.open(ruta).convert("RGB")
+            img.thumbnail(size)
+
+            fondo = Image.new("RGB", size, (255, 255, 255))
+            offset = (
+                (size[0] - img.size[0]) // 2,
+                (size[1] - img.size[1]) // 2
+            )
+            fondo.paste(img, offset)
+            return fondo
+        except:
+            return None
+
+    # -------------------------
+    # 🔐 AVISO LEGAL
+    # -------------------------
+    with st.expander("⚖️ Información legal y condiciones de compra"):
+        st.markdown("""
+        **Protección al consumidor (Costa Rica)**  
+
+        - Todos los precios incluyen impuestos según la normativa vigente (IVA 13%).
+        - Los productos están sujetos a disponibilidad.
+        - El cliente tiene derecho a recibir factura por su compra.
+        - No se aceptan devoluciones en productos perecederos.
+        - Al comprar, usted acepta nuestros términos y condiciones.
+
+        📌 *Cumplimiento de la Ley 7472.*
+        """)
 
     # -------------------------
     # BUSCADOR
@@ -24,16 +60,16 @@ def productos():
     )
 
     # -------------------------
-    # LISTA DE PRODUCTOS
+    # PRODUCTOS CON IMAGEN
     # -------------------------
     lista = [
-        {"nombre": "Arroz", "precio": 1000, "cat": "Abarrotes"},
-        {"nombre": "Frijoles", "precio": 1200, "cat": "Abarrotes"},
-        {"nombre": "Azúcar", "precio": 900, "cat": "Abarrotes"},
-        {"nombre": "Leche", "precio": 800, "cat": "Lácteos"},
-        {"nombre": "Queso", "precio": 1800, "cat": "Lácteos"},
-        {"nombre": "Pan", "precio": 500, "cat": "Panadería"},
-        {"nombre": "Galletas", "precio": 600, "cat": "Panadería"},
+        {"nombre": "Arroz", "precio": 1000, "cat": "Abarrotes", "img": "arroz.jpg"},
+        {"nombre": "Frijoles", "precio": 1200, "cat": "Abarrotes", "img": "frijoles.jpg"},
+        {"nombre": "Azúcar", "precio": 900, "cat": "Abarrotes", "img": "azucar.jpg"},
+        {"nombre": "Leche", "precio": 800, "cat": "Lácteos", "img": "leche.jpg"},
+        {"nombre": "Queso", "precio": 1800, "cat": "Lácteos", "img": "queso.jpg"},
+        {"nombre": "Pan", "precio": 500, "cat": "Panadería", "img": "pan.jpg"},
+        {"nombre": "Galletas", "precio": 600, "cat": "Panadería", "img": "galletas.jpg"},
     ]
 
     st.divider()
@@ -46,27 +82,40 @@ def productos():
 
     for p in lista:
 
-        # FILTRO POR CATEGORÍA
         if categoria != "Todos" and p["cat"] != categoria:
             continue
 
-        # FILTRO POR BÚSQUEDA
         if busqueda and busqueda.lower() not in p["nombre"].lower():
             continue
 
         with cols[index % 3]:
 
+            ruta = f"assets/productos/{p['img']}"
+
+            if os.path.exists(ruta):
+                img = cargar_imagen_uniforme(ruta)
+
+                if img:
+                    st.image(img, use_container_width=True)
+                else:
+                    st.warning("Error cargando imagen")
+            else:
+                st.warning(f"No existe {p['img']}")
+
+            # CARD
             st.markdown(f"""
             <div style="
-                background:#1e293b;
-                padding:15px;
+                background:#0f172a;
+                padding:12px;
                 border-radius:12px;
                 border:1px solid #334155;
-                margin-bottom:15px;
+                margin-bottom:10px;
+                text-align:center;
+                height:140px;
             ">
                 <h4>{p["nombre"]}</h4>
-                <p>💰 ₡{p["precio"]}</p>
-                <small>{p["cat"]}</small>
+                <p style="font-size:18px;color:#22c55e;">₡{p["precio"]}</p>
+                <small style="color:#94a3b8;">{p["cat"]}</small>
             </div>
             """, unsafe_allow_html=True)
 
@@ -92,7 +141,7 @@ def productos():
                     "cantidad": cantidad
                 })
 
-                st.success(f"{p['nombre']} agregado ✔️")
+                st.toast(f"{p['nombre']} agregado al carrito 🛒")
 
         index += 1
 
@@ -105,9 +154,8 @@ def productos():
     total = sum(item["precio"] * item["cantidad"] for item in st.session_state["carrito"])
 
     col1, col2 = st.columns(2)
-
-    col1.info(f"Productos: {len(st.session_state['carrito'])}")
-    col2.success(f"Total: ₡{total}")
+    col1.metric("Productos", len(st.session_state["carrito"]))
+    col2.metric("Total", f"₡{total}")
 
     # -------------------------
     # BOTONES
@@ -121,3 +169,13 @@ def productos():
     if col2.button("➡️ Ir al carrito"):
         st.session_state["page"] = "carrito"
         st.rerun()
+
+    # -------------------------
+    # 📜 DISCLAIMER FINAL
+    # -------------------------
+    st.markdown("---")
+    st.caption("""
+    ⚖️ Los precios pueden variar sin previo aviso.  
+    📄 Factura disponible al finalizar la compra.  
+    🛡️ Sitio protegido para transacciones seguras.
+    """)

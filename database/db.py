@@ -15,27 +15,40 @@ def init_db():
     conexion = conectar()
     cursor = conexion.cursor()
 
+    # =========================
     # USUARIOS
+    # =========================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
         password BLOB,
-        rol TEXT
+        rol TEXT,
+        fecha_creacion TEXT,
+        activo INTEGER DEFAULT 1
     )
     """)
 
-    # PRODUCTOS
+    # =========================
+    # PRODUCTOS (MEJORADO 🔥)
+    # =========================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS productos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo TEXT UNIQUE,
         nombre TEXT UNIQUE,
+        categoria TEXT,
         precio REAL,
-        stock INTEGER
+        stock INTEGER,
+        imagen TEXT, -- 🔥 ruta o URL de imagen
+        fecha_creacion TEXT,
+        activo INTEGER DEFAULT 1
     )
     """)
 
+    # =========================
     # VENTAS
+    # =========================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS ventas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,14 +59,17 @@ def init_db():
     )
     """)
 
-    # 🔥 FACTURAS (NUEVO)
+    # =========================
+    # FACTURAS (LEGAL 🔥)
+    # =========================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS facturas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         numero TEXT,
         fecha TEXT,
         total REAL,
-        metodo_pago TEXT
+        metodo_pago TEXT,
+        estado TEXT DEFAULT 'emitida'
     )
     """)
 
@@ -68,22 +84,35 @@ def obtener_productos():
     conn = conectar()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT nombre, precio, stock FROM productos")
-    data = cursor.fetchall()
+    cursor.execute("""
+        SELECT nombre, precio, stock, imagen, categoria
+        FROM productos
+        WHERE activo = 1
+    """)
 
+    data = cursor.fetchall()
     conn.close()
     return data
 
 
-def agregar_producto(nombre, precio, stock):
+def agregar_producto(nombre, precio, stock, categoria, imagen=None):
     conn = conectar()
     cursor = conn.cursor()
 
     try:
-        cursor.execute(
-            "INSERT INTO productos(nombre, precio, stock) VALUES (?, ?, ?)",
-            (nombre, precio, stock)
-        )
+        cursor.execute("""
+        INSERT INTO productos(codigo, nombre, categoria, precio, stock, imagen, fecha_creacion)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            f"PROD-{int(datetime.now().timestamp())}",
+            nombre,
+            categoria,
+            precio,
+            stock,
+            imagen,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ))
+
         conn.commit()
         return True
 
@@ -94,14 +123,15 @@ def agregar_producto(nombre, precio, stock):
         conn.close()
 
 
-def actualizar_producto(nombre, precio, stock):
+def actualizar_producto(nombre, precio, stock, categoria, imagen=None):
     conn = conectar()
     cursor = conn.cursor()
 
-    cursor.execute(
-        "UPDATE productos SET precio=?, stock=? WHERE nombre=?",
-        (precio, stock, nombre)
-    )
+    cursor.execute("""
+        UPDATE productos 
+        SET precio=?, stock=?, categoria=?, imagen=?
+        WHERE nombre=?
+    """, (precio, stock, categoria, imagen, nombre))
 
     conn.commit()
     conn.close()
@@ -111,7 +141,10 @@ def eliminar_producto(nombre):
     conn = conectar()
     cursor = conn.cursor()
 
-    cursor.execute("DELETE FROM productos WHERE nombre=?", (nombre,))
+    # 🔥 Soft delete (legalmente mejor)
+    cursor.execute("""
+        UPDATE productos SET activo = 0 WHERE nombre=?
+    """, (nombre,))
 
     conn.commit()
     conn.close()
@@ -128,9 +161,8 @@ def guardar_venta(carrito):
 
     for item in carrito:
 
-        # 🔥 VALIDAR STOCK
         cursor.execute(
-            "SELECT stock FROM productos WHERE nombre=?",
+            "SELECT stock FROM productos WHERE nombre=? AND activo=1",
             (item["producto"],)
         )
         resultado = cursor.fetchone()
@@ -141,13 +173,11 @@ def guardar_venta(carrito):
             if stock_actual < item["cantidad"]:
                 raise Exception(f"Stock insuficiente para {item['producto']}")
 
-            # 🔥 DESCONTAR STOCK
             cursor.execute(
                 "UPDATE productos SET stock = stock - ? WHERE nombre=?",
                 (item["cantidad"], item["producto"])
             )
 
-        # GUARDAR VENTA
         cursor.execute("""
             INSERT INTO ventas(producto, cantidad, total, fecha)
             VALUES (?, ?, ?, ?)

@@ -11,6 +11,15 @@ def ofertas():
         st.session_state["carrito"] = []
 
     # -------------------------
+    # ⚖️ AVISO LEGAL (CLAVE)
+    # -------------------------
+    st.info("""
+⚖️ Todas las ofertas muestran el precio final con descuento aplicado.  
+Los precios incluyen impuestos cuando corresponde.  
+Promociones válidas hasta agotar existencias.
+""")
+
+    # -------------------------
     # FILTRO
     # -------------------------
     filtro = st.selectbox("Filtrar por descuento", ["Todos", "10%", "20%"])
@@ -62,6 +71,9 @@ def ofertas():
             </div>
             """, unsafe_allow_html=True)
 
+            # 🔥 TRANSPARENCIA PRECIO
+            st.caption("Precio final incluye descuento aplicado")
+
             # -------------------------
             # CANTIDAD
             # -------------------------
@@ -100,6 +112,18 @@ def ofertas():
 
     col1.info(f"Productos: {len(st.session_state['carrito'])}")
     col2.success(f"Total: ₡{total}")
+
+    # -------------------------
+    # ⚖️ CONDICIONES DE OFERTA
+    # -------------------------
+    with st.expander("📜 Condiciones de las ofertas"):
+
+        st.write("""
+- Las promociones son temporales.
+- No acumulables con otras ofertas.
+- Sujetas a disponibilidad de inventario.
+- Aplican únicamente al momento de la compra.
+""")
 
     # -------------------------
     # BOTÓN LIMPIAR

@@ -5,10 +5,6 @@ from database.db import guardar_venta
 
 
 def pago():
-    """
-    Vista de pago del sistema.
-    Permite confirmar la compra, guardar venta y generar factura PDF.
-    """
 
     st.title("💳 Pago seguro")
 
@@ -47,6 +43,9 @@ def pago():
     col2.info(f"IVA (13%): ₡{round(iva, 2)}")
     col3.success(f"Total: ₡{round(total, 2)}")
 
+    # 🔥 AVISO LEGAL
+    st.caption("⚖️ El total incluye IVA conforme a la normativa tributaria vigente en Costa Rica.")
+
     st.divider()
 
     # -------------------------
@@ -59,11 +58,11 @@ def pago():
         ["Tarjeta", "SINPE", "Efectivo"]
     )
 
+    nombre = tarjeta = fecha = cvv = telefono = None
+
     # -------------------------
     # CAMPOS DINÁMICOS
     # -------------------------
-    nombre = tarjeta = fecha = cvv = telefono = None
-
     if metodo == "Tarjeta":
         st.markdown("### 💳 Pago con tarjeta")
         nombre = st.text_input("Nombre en la tarjeta")
@@ -83,9 +82,29 @@ def pago():
     st.divider()
 
     # -------------------------
+    # 📜 TÉRMINOS Y CONSENTIMIENTO (🔥 CLAVE)
+    # -------------------------
+    with st.expander("📜 Términos y condiciones"):
+        st.write("""
+- La compra genera un comprobante digital.
+- Los precios incluyen impuestos aplicables.
+- No se realizan devoluciones sin factura.
+- Este sistema es una simulación académica.
+""")
+
+    acepta = st.checkbox("Acepto los términos y condiciones")
+
+    st.caption("🔒 Tus datos están protegidos y no serán compartidos con terceros.")
+
+    # -------------------------
     # BOTÓN DE PAGO
     # -------------------------
     if st.button("✅ Confirmar pago", use_container_width=True):
+
+        # 🔥 VALIDACIÓN LEGAL
+        if not acepta:
+            st.error("Debes aceptar los términos y condiciones")
+            return
 
         # VALIDACIONES
         if metodo == "Tarjeta":
@@ -104,15 +123,10 @@ def pago():
         with st.spinner("Procesando pago..."):
 
             try:
-                # Guardar venta
                 guardar_venta(carrito)
-
-                # Generar factura
                 generar_factura(carrito, total, metodo)
 
-                # -------------------------
-                # MENSAJES UX
-                # -------------------------
+                # MENSAJES
                 if metodo == "Tarjeta":
                     st.success("💳 Pago aprobado correctamente")
 
@@ -124,15 +138,10 @@ def pago():
 
                 st.balloons()
 
-                # Guardar historial
                 st.session_state["ultima_compra"] = datetime.now()
-
-                # Limpiar carrito
                 st.session_state["carrito"] = []
 
-                # -------------------------
-                # DESCARGA PDF
-                # -------------------------
+                # DESCARGA
                 try:
                     with open("factura.pdf", "rb") as file:
                         st.download_button(

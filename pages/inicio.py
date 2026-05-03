@@ -1,4 +1,6 @@
 import streamlit as st
+import os
+from PIL import Image
 
 def inicio():
 
@@ -8,10 +10,31 @@ def inicio():
     st.divider()
 
     # -------------------------
-    # ESTADO
+    # SESSION
     # -------------------------
     if "categoria" not in st.session_state:
         st.session_state["categoria"] = "Todos"
+
+    if "carrito" not in st.session_state:
+        st.session_state["carrito"] = []
+
+    # -------------------------
+    # FUNCIÓN PARA NORMALIZAR IMÁGENES 🔥
+    # -------------------------
+    def cargar_imagen_uniforme(ruta, size=(300, 300)):
+        try:
+            img = Image.open(ruta).convert("RGB")
+            img.thumbnail(size)
+
+            fondo = Image.new("RGB", size, (255, 255, 255))
+            offset = (
+                (size[0] - img.size[0]) // 2,
+                (size[1] - img.size[1]) // 2
+            )
+            fondo.paste(img, offset)
+            return fondo
+        except:
+            return None
 
     # -------------------------
     # CATEGORÍAS
@@ -43,25 +66,25 @@ def inicio():
     # PRODUCTOS
     # -------------------------
     productos = [
-        {"nombre": "Arroz", "precio": 1500, "cat": "Abarrotes"},
-        {"nombre": "Frijoles", "precio": 1200, "cat": "Abarrotes"},
-        {"nombre": "Azúcar", "precio": 900, "cat": "Abarrotes"},
-        {"nombre": "Sal", "precio": 500, "cat": "Abarrotes"},
+        {"nombre": "Arroz", "precio": 1500, "cat": "Abarrotes", "img": "arroz.jpg"},
+        {"nombre": "Frijoles", "precio": 1200, "cat": "Abarrotes", "img": "frijoles.jpg"},
+        {"nombre": "Azúcar", "precio": 900, "cat": "Abarrotes", "img": "azucar.jpg"},
+        {"nombre": "Sal", "precio": 500, "cat": "Abarrotes", "img": "sal.jpg"},
 
-        {"nombre": "Leche", "precio": 900, "cat": "Lacteos"},
-        {"nombre": "Queso", "precio": 1800, "cat": "Lacteos"},
-        {"nombre": "Yogurt", "precio": 700, "cat": "Lacteos"},
-        {"nombre": "Mantequilla", "precio": 1200, "cat": "Lacteos"},
+        {"nombre": "Leche", "precio": 900, "cat": "Lacteos", "img": "leche.jpg"},
+        {"nombre": "Queso", "precio": 1800, "cat": "Lacteos", "img": "queso.jpg"},
+        {"nombre": "Yogurt", "precio": 700, "cat": "Lacteos", "img": "yogurt.jpg"},
+        {"nombre": "Mantequilla", "precio": 1200, "cat": "Lacteos", "img": "mantequilla.jpg"},
 
-        {"nombre": "Pan", "precio": 800, "cat": "Panaderia"},
-        {"nombre": "Queque", "precio": 1500, "cat": "Panaderia"},
-        {"nombre": "Galletas", "precio": 600, "cat": "Panaderia"},
-        {"nombre": "Empanadas", "precio": 1000, "cat": "Panaderia"},
+        {"nombre": "Pan", "precio": 800, "cat": "Panaderia", "img": "pan.jpg"},
+        {"nombre": "Queque", "precio": 1500, "cat": "Panaderia", "img": "queque.jpg"},
+        {"nombre": "Galletas", "precio": 600, "cat": "Panaderia", "img": "galletas.jpg"},
+        {"nombre": "Empanadas", "precio": 1000, "cat": "Panaderia", "img": "empanadas.jpg"},
 
-        {"nombre": "Huevos", "precio": 2500, "cat": "Basicos"},
-        {"nombre": "Aceite", "precio": 2200, "cat": "Basicos"},
-        {"nombre": "Café", "precio": 3000, "cat": "Basicos"},
-        {"nombre": "Atún", "precio": 1300, "cat": "Basicos"},
+        {"nombre": "Huevos", "precio": 2500, "cat": "Basicos", "img": "huevos.jpg"},
+        {"nombre": "Aceite", "precio": 2200, "cat": "Basicos", "img": "aceite.jpg"},
+        {"nombre": "Café", "precio": 3000, "cat": "Basicos", "img": "cafe.jpg"},
+        {"nombre": "Atún", "precio": 1300, "cat": "Basicos", "img": "atun.jpg"},
     ]
 
     st.subheader("🛒 Productos")
@@ -76,14 +99,27 @@ def inicio():
 
         with cols[index % 3]:
 
+            ruta = f"assets/productos/{p['img']}"
+
+            if os.path.exists(ruta):
+                img = cargar_imagen_uniforme(ruta)
+
+                if img:
+                    st.image(img, use_container_width=True)
+                else:
+                    st.warning("Error cargando imagen")
+            else:
+                st.warning(f"No existe {p['img']}")
+
+            # CARD
             st.markdown(f"""
             <div style="
                 background:#1e293b;
-                padding:15px;
-                border-radius:12px;
-                border:1px solid #334155;
-                margin-bottom:10px;
+                padding:10px;
+                border-radius:10px;
                 text-align:center;
+                margin-bottom:10px;
+                height:140px;
             ">
                 <h4>{p["nombre"]}</h4>
                 <p style="font-size:18px;">💰 ₡{p["precio"]}</p>
@@ -91,7 +127,7 @@ def inicio():
             </div>
             """, unsafe_allow_html=True)
 
-            if st.button("🛒 Comprar", key=p["nombre"]):
+            if st.button("🛒 Agregar", key=p["nombre"]):
                 st.session_state["carrito"].append({
                     "producto": p["nombre"],
                     "precio": p["precio"],
@@ -108,7 +144,6 @@ def inicio():
     st.subheader("🔥 Ofertas del día")
 
     col1, col2 = st.columns(2)
-
     col1.success("🍚 Arroz ₡1200")
     col2.warning("🥖 Pan ₡600")
 
@@ -122,3 +157,12 @@ def inicio():
     col1.info("📍 Barrio Chino, San José")
     col2.info("☎ 2230-5698")
     col3.info("🕒 7:00 AM - 9:00 PM")
+
+    # -------------------------
+    # ⚖️ AVISO LEGAL
+    # -------------------------
+    st.markdown("---")
+    st.caption("""
+    ⚖️ Las imágenes mostradas son de carácter ilustrativo.
+    Este sistema es una simulación académica y no constituye una plataforma de comercio electrónico oficial conforme a la normativa del Ministerio de Hacienda de Costa Rica.
+    """)

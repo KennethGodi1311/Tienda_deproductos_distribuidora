@@ -33,6 +33,13 @@ def contacto():
         7:00 AM - 9:00 PM
         """)
 
+        # 🔥 DERECHO DEL CONSUMIDOR
+        st.info("""
+⚖️ Conforme a la normativa de protección al consumidor en Costa Rica,  
+usted tiene derecho a presentar consultas, quejas o reclamos 
+relacionados con productos o servicios adquiridos.
+""")
+
     # -------------------------
     # MAPA
     # -------------------------
@@ -58,9 +65,15 @@ def contacto():
         correo = st.text_input("📧 Correo")
 
     with col2:
-        tipo = st.selectbox("📌 Tipo de mensaje", ["Consulta", "Queja", "Sugerencia"])
+        tipo = st.selectbox(
+            "📌 Tipo de mensaje",
+            ["Consulta", "Queja", "Sugerencia", "Reclamo formal"]
+        )
 
     mensaje = st.text_area("💬 Mensaje")
+
+    # 🔥 CONSENTIMIENTO LEGAL
+    acepta = st.checkbox("Acepto el tratamiento de mis datos personales")
 
     # -------------------------
     # VALIDACIÓN EMAIL
@@ -81,13 +94,39 @@ def contacto():
             st.error("❌ Correo inválido")
             return
 
-        # Simulación de envío
+        if not acepta:
+            st.error("⚠️ Debe aceptar la política de datos")
+            return
+
+        # Simulación de registro (esto es clave legalmente)
         st.success("✔ Mensaje enviado correctamente")
         st.info(f"Tipo: {tipo}")
+
+        # 🔥 IMPORTANTE (trazabilidad legal)
+        if tipo == "Reclamo formal":
+            st.warning("""
+📌 Su reclamo ha sido registrado.
+Será atendido conforme a los plazos establecidos por normativa.
+""")
 
         st.balloons()
 
     st.divider()
+
+    # -------------------------
+    # 🔒 PRIVACIDAD
+    # -------------------------
+    with st.expander("🔒 Política de privacidad"):
+
+        st.write("""
+La información proporcionada será utilizada únicamente para atender su solicitud.
+
+- No se compartirá con terceros.
+- Se utilizará únicamente con fines de contacto.
+- Se respeta la confidencialidad del usuario.
+
+Este sistema es una simulación con fines educativos.
+""")
 
     # -------------------------
     # FOOTER
@@ -99,4 +138,9 @@ def contacto():
     col3.info("📧 contacto@dragondorado.cr")
 
     st.markdown("---")
-    st.caption("© 2025 Pulpería El Dragón Dorado")
+    st.caption("""
+© 2025 Pulpería El Dragón Dorado  
+
+Sistema de demostración académica.  
+No constituye un canal oficial de gestión legal.
+""")

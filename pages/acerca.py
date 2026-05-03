@@ -43,6 +43,50 @@ def acerca():
         st.success("✔ Precios accesibles")
         st.success("✔ Confianza")
 
+        st.divider()
+
+        # -------------------------
+        # ⚖️ MARCO LEGAL (NUEVO 🔥)
+        # -------------------------
+        st.markdown("#### ⚖️ Cumplimiento Legal")
+
+        st.info("""
+Este sistema se desarrolla conforme a principios básicos del comercio electrónico 
+y protección al consumidor en Costa Rica.
+
+✔ Transparencia en precios  
+✔ Información clara al consumidor  
+✔ Registro de transacciones  
+✔ Protección de datos personales  
+""")
+
+        # -------------------------
+        # 📜 TÉRMINOS Y CONDICIONES
+        # -------------------------
+        with st.expander("📜 Términos y Condiciones"):
+
+            st.write("""
+El uso de este sistema implica la aceptación de las siguientes condiciones:
+
+- Los precios mostrados incluyen impuestos aplicables (IVA 13%).
+- Toda compra genera un comprobante digital.
+- El usuario debe proporcionar información veraz.
+- Este sistema es una simulación con fines educativos.
+""")
+
+        # -------------------------
+        # 🔒 PRIVACIDAD
+        # -------------------------
+        with st.expander("🔒 Política de Privacidad"):
+
+            st.write("""
+Nos comprometemos a proteger la información del usuario.
+
+- No compartimos datos con terceros.
+- La información se utiliza únicamente para fines del sistema.
+- Cumplimos principios básicos de protección de datos personales.
+""")
+
     # -------------------------
     # INFO LATERAL
     # -------------------------
@@ -71,13 +115,11 @@ def acerca():
     st.divider()
 
     # -------------------------
-    # FOOTER
+    # FOOTER LEGAL (🔥 CLAVE)
     # -------------------------
-    col1, col2, col3 = st.columns(3)
+    st.caption("""
+© 2025 Pulpería El Dragón Dorado  
 
-    col1.info("📍 San José")
-    col2.info("☎ 2230-5698")
-    col3.info("📧 contacto@dragondorado.cr")
-
-    st.markdown("---")
-    st.caption("© 2025 Pulpería El Dragón Dorado")
+Este sistema constituye una simulación académica de comercio electrónico.  
+No representa una plataforma oficial de facturación electrónica ante el Ministerio de Hacienda de Costa Rica.
+""")
