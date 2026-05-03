@@ -7,6 +7,15 @@ from datetime import datetime
 def conectar():
     return sqlite3.connect("tienda.db", check_same_thread=False)
 
+# =========================
+# MIGRACIONES (🔥 CLAVE)
+# =========================
+def agregar_columna_si_no_existe(cursor, tabla, columna_def):
+    try:
+        cursor.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna_def}")
+    except:
+        pass
+
 
 # =========================
 # INIT DB
@@ -29,6 +38,15 @@ def init_db():
     )
     """)
 
+    # 🔥 PERFIL COMPLETO
+    agregar_columna_si_no_existe(cursor, "usuarios", "foto TEXT")
+    agregar_columna_si_no_existe(cursor, "usuarios", "nombre TEXT")
+    agregar_columna_si_no_existe(cursor, "usuarios", "correo TEXT")
+    agregar_columna_si_no_existe(cursor, "usuarios", "telefono TEXT")
+    agregar_columna_si_no_existe(cursor, "usuarios", "direccion TEXT")
+    agregar_columna_si_no_existe(cursor, "usuarios", "edad INTEGER")
+
+
     # =========================
     # PRODUCTOS (MEJORADO 🔥)
     # =========================
@@ -45,6 +63,7 @@ def init_db():
         activo INTEGER DEFAULT 1
     )
     """)
+    
 
     # =========================
     # VENTAS

@@ -16,6 +16,7 @@ from pages.dashboard import dashboard
 from pages.facturas import facturas   # 🔥 NUEVO
 from pages.ventas import ventas
 from pages.Inventario import inventario
+from pages.perfil import perfil
 
 
 from utils.styles import load_styles
@@ -80,6 +81,9 @@ elif st.session_state["auth_view"] == "registro":
 # SIDEBAR
 # =========================
 st.sidebar.markdown("## 🐉 Menú")
+
+if st.sidebar.button("👤 Mi perfil"):
+    ir("perfil")
 
 # -------------------------
 # USUARIO LOGUEADO
@@ -233,3 +237,6 @@ elif page == "inventario":
 
 elif page == "ventas":
     ventas()
+
+elif page == "perfil":
+    perfil()

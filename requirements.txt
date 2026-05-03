@@ -4,3 +4,15 @@ bcrypt
 pandas
 matplotlib
 qrcode[pil]
+
+# 🔥 NUEVO (email)
+secure-smtplib
+
+# 🔥 NUEVO (SMS con Twilio)
+twilio
+
+# 🔥 OPCIONAL (mejor manejo de imágenes)
+Pillow
+
+# 🔥 OPCIONAL (variables de entorno más seguro)
+python-dotenv
