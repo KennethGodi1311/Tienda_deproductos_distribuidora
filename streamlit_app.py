@@ -13,6 +13,10 @@ from pages.chatbot import chatbot
 from pages.carrito import carrito
 from pages.pago import pago
 from pages.dashboard import dashboard
+from pages.facturas import facturas   # 🔥 NUEVO
+from pages.ventas import ventas
+from pages.Inventario import inventario
+
 
 from utils.styles import load_styles
 
@@ -105,6 +109,10 @@ if st.session_state["login"]:
     if st.sidebar.button("🤖 Chatbot"):
         ir("chatbot")
 
+    # 🔥 NUEVO: FACTURAS
+    if st.sidebar.button("🧾 Facturas"):
+        ir("facturas")
+
     st.sidebar.markdown("---")
 
     # ADMIN
@@ -132,7 +140,7 @@ if st.session_state["login"]:
     if st.sidebar.button("Ir a pagar"):
         ir("pago")
 
-    # 🚪 LOGOUT (corregido)
+    # LOGOUT
     if st.sidebar.button("🚪 Cerrar sesión"):
         for key in ["login", "user", "rol"]:
             st.session_state[key] = None
@@ -207,6 +215,10 @@ elif page == "carrito":
 elif page == "pago":
     pago()
 
+# 🔥 NUEVO
+elif page == "facturas":
+    facturas()
+
 elif page == "dashboard":
     if st.session_state["rol"] == "admin":
         dashboard()
@@ -214,9 +226,10 @@ elif page == "dashboard":
         st.error("🚫 No autorizado")
 
 elif page == "inventario":
-    st.title("📦 Inventario (admin)")
-    st.info("Próximamente...")
+    if st.session_state["rol"] == "admin":
+        inventario()
+    else:
+        st.error("🚫 No autorizado")
 
 elif page == "ventas":
-    st.title("💰 Ventas (admin)")
-    st.info("Próximamente...")
+    ventas()

@@ -10,45 +10,42 @@ def pago():
     Permite confirmar la compra, guardar venta y generar factura PDF.
     """
 
-    st.title("💳 Pago")
+    st.title("💳 Pago seguro")
 
     # -------------------------
     # VALIDACIÓN: CARRITO VACÍO
     # -------------------------
-    if "carrito" not in st.session_state or not st.session_state["carrito"]:
-        st.warning("No hay productos en el carrito")
+    if not st.session_state.get("carrito"):
+        st.warning("🛒 No hay productos en el carrito")
 
-        if st.button("🛒 Ir a productos"):
+        if st.button("Ir a productos"):
             st.session_state["page"] = "productos"
             st.rerun()
-
         return
 
-    # -------------------------
-    # CALCULAR TOTAL REAL
-    # -------------------------
-    subtotal = sum(
-        item["precio"] * item["cantidad"]
-        for item in st.session_state["carrito"]
-    )
+    carrito = st.session_state["carrito"]
 
+    # -------------------------
+    # CÁLCULO
+    # -------------------------
+    subtotal = sum(item["precio"] * item["cantidad"] for item in carrito)
     iva = subtotal * 0.13
     total = subtotal + iva
 
     # -------------------------
-    # RESUMEN DE COMPRA
+    # RESUMEN
     # -------------------------
     st.subheader("🧾 Resumen de compra")
 
-    for item in st.session_state["carrito"]:
+    for item in carrito:
         st.write(
-            f"- {item['producto']} x{item['cantidad']} "
-            f"→ ₡{item['precio'] * item['cantidad']}"
+            f"• {item['producto']} x{item['cantidad']} → ₡{item['precio'] * item['cantidad']}"
         )
 
-    st.info(f"Subtotal: ₡{round(subtotal,2)}")
-    st.info(f"IVA (13%): ₡{round(iva,2)}")
-    st.success(f"Total: ₡{round(total,2)}")
+    col1, col2, col3 = st.columns(3)
+    col1.info(f"Subtotal: ₡{round(subtotal, 2)}")
+    col2.info(f"IVA (13%): ₡{round(iva, 2)}")
+    col3.success(f"Total: ₡{round(total, 2)}")
 
     st.divider()
 
@@ -57,43 +54,42 @@ def pago():
     # -------------------------
     st.subheader("💳 Método de pago")
 
-    metodo = st.selectbox("Selecciona cómo pagar", ["Tarjeta", "SINPE", "Efectivo"])
-
-    # VARIABLES
-    nombre = tarjeta = fecha = cvv = telefono = None
+    metodo = st.selectbox(
+        "Selecciona cómo pagar",
+        ["Tarjeta", "SINPE", "Efectivo"]
+    )
 
     # -------------------------
     # CAMPOS DINÁMICOS
     # -------------------------
+    nombre = tarjeta = fecha = cvv = telefono = None
+
     if metodo == "Tarjeta":
-
         st.markdown("### 💳 Pago con tarjeta")
-
         nombre = st.text_input("Nombre en la tarjeta")
         tarjeta = st.text_input("Número de tarjeta")
         fecha = st.text_input("Fecha expiración (MM/AA)")
         cvv = st.text_input("CVV", type="password")
 
     elif metodo == "SINPE":
-
         st.markdown("### 📱 Pago con SINPE")
-
-        telefono = st.text_input("Número de teléfono SINPE")
-        st.info("Se enviará una solicitud de pago al número indicado")
+        telefono = st.text_input("Número de teléfono")
+        st.info("Se enviará una solicitud de pago al número")
 
     elif metodo == "Efectivo":
-
         st.markdown("### 💵 Pago en efectivo")
         st.info("Pagarás al recibir el pedido")
 
+    st.divider()
+
     # -------------------------
-    # CONFIRMAR PAGO
+    # BOTÓN DE PAGO
     # -------------------------
-    if st.button("✅ Confirmar pago"):
+    if st.button("✅ Confirmar pago", use_container_width=True):
 
         # VALIDACIONES
         if metodo == "Tarjeta":
-            if not nombre or not tarjeta or not fecha or not cvv:
+            if not all([nombre, tarjeta, fecha, cvv]):
                 st.error("Completa todos los datos de la tarjeta")
                 return
 
@@ -102,55 +98,54 @@ def pago():
                 st.error("Ingresa el número SINPE")
                 return
 
+        # -------------------------
+        # PROCESO
+        # -------------------------
         with st.spinner("Procesando pago..."):
 
-            # -------------------------
-            # GUARDAR VENTA EN BD
-            # -------------------------
-            guardar_venta(st.session_state["carrito"])
-
-            # -------------------------
-            # GENERAR FACTURA (FIX 🔥)
-            # -------------------------
-            generar_factura(
-                st.session_state["carrito"],
-                total,
-                metodo   # 👈 AQUÍ ESTABA EL ERROR
-            )
-
-            # -------------------------
-            # MENSAJES
-            # -------------------------
-            if metodo == "Tarjeta":
-                st.success("💳 Pago con tarjeta aprobado")
-
-            elif metodo == "SINPE":
-                st.success(f"📱 Solicitud SINPE enviada al {telefono}")
-
-            elif metodo == "Efectivo":
-                st.success("💵 Pedido registrado para pago en efectivo")
-
-            st.balloons()
-
-            # -------------------------
-            # LIMPIAR CARRITO
-            # -------------------------
-            st.session_state["carrito"] = []
-            st.session_state["ultima_compra"] = datetime.now()
-
-            # -------------------------
-            # DESCARGAR FACTURA
-            # -------------------------
             try:
-                with open("factura.pdf", "rb") as file:
-                    st.download_button(
-                        label="📄 Descargar factura",
-                        data=file,
-                        file_name="factura.pdf",
-                        mime="application/pdf"
-                    )
-            except:
-                st.warning("No se pudo generar la factura")
+                # Guardar venta
+                guardar_venta(carrito)
+
+                # Generar factura
+                generar_factura(carrito, total, metodo)
+
+                # -------------------------
+                # MENSAJES UX
+                # -------------------------
+                if metodo == "Tarjeta":
+                    st.success("💳 Pago aprobado correctamente")
+
+                elif metodo == "SINPE":
+                    st.success(f"📱 Solicitud enviada al {telefono}")
+
+                elif metodo == "Efectivo":
+                    st.success("💵 Pedido registrado para pago contra entrega")
+
+                st.balloons()
+
+                # Guardar historial
+                st.session_state["ultima_compra"] = datetime.now()
+
+                # Limpiar carrito
+                st.session_state["carrito"] = []
+
+                # -------------------------
+                # DESCARGA PDF
+                # -------------------------
+                try:
+                    with open("factura.pdf", "rb") as file:
+                        st.download_button(
+                            label="📄 Descargar factura",
+                            data=file,
+                            file_name="factura.pdf",
+                            mime="application/pdf"
+                        )
+                except:
+                    st.warning("Factura generada pero no se pudo descargar")
+
+            except Exception as e:
+                st.error(f"Error en el proceso: {e}")
 
     # -------------------------
     # VOLVER

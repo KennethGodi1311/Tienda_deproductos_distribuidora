@@ -6,9 +6,18 @@ from reportlab.lib.units import inch
 from datetime import datetime
 import os
 import sqlite3
-import qrcode
+
+# 🔥 IMPORT SEGURO (NO ROMPE SI NO EXISTE)
+try:
+    import qrcode
+    QR_AVAILABLE = True
+except:
+    QR_AVAILABLE = False
 
 
+# =========================
+# GENERAR NÚMERO FACTURA REAL
+# =========================
 def generar_numero_factura():
     conn = sqlite3.connect("tienda.db")
     cursor = conn.cursor()
@@ -28,21 +37,29 @@ def generar_numero_factura():
     return f"FAC-{numero:06d}"
 
 
+# =========================
+# GENERAR QR (SEGURO)
+# =========================
 def generar_qr(texto):
+    if not QR_AVAILABLE:
+        return None
+
+    ruta = "qr_temp.png"
+
     qr = qrcode.make(texto)
-    ruta = "qr.png"
     qr.save(ruta)
+
     return ruta
 
 
+# =========================
+# FACTURA PRINCIPAL
+# =========================
 def generar_factura(carrito, total, metodo_pago):
 
     if not carrito:
         return
 
-    # -------------------------
-    # CONFIG
-    # -------------------------
     doc = SimpleDocTemplate("factura.pdf", pagesize=letter)
     styles = getSampleStyleSheet()
     contenido = []
@@ -52,25 +69,25 @@ def generar_factura(carrito, total, metodo_pago):
     # -------------------------
     empresa = "Pulpería El Dragón Dorado"
     cedula = "3-101-999999"
-    direccion = "Barrio Chino, San José"
+    direccion = "Barrio Chino, San José, Costa Rica"
     telefono = "2230-5698"
 
     numero_factura = generar_numero_factura()
     fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
 
     # -------------------------
-    # LOGO (opcional)
+    # HEADER
     # -------------------------
     if os.path.exists("logo.png"):
-        contenido.append(Image("logo.png", width=1.5*inch, height=1.5*inch))
+        contenido.append(Image("logo.png", width=1.2*inch, height=1.2*inch))
 
     contenido.append(Paragraph(f"<b>{empresa}</b>", styles["Title"]))
-    contenido.append(Paragraph(f"Cédula: {cedula}", styles["Normal"]))
-    contenido.append(Paragraph(f"{direccion}", styles["Normal"]))
+    contenido.append(Paragraph(f"Cédula Jurídica: {cedula}", styles["Normal"]))
+    contenido.append(Paragraph(direccion, styles["Normal"]))
     contenido.append(Paragraph(f"Tel: {telefono}", styles["Normal"]))
     contenido.append(Spacer(1, 10))
 
-    contenido.append(Paragraph(f"<b>Factura:</b> {numero_factura}", styles["Normal"]))
+    contenido.append(Paragraph(f"<b>Factura N°:</b> {numero_factura}", styles["Normal"]))
     contenido.append(Paragraph(f"Fecha: {fecha}", styles["Normal"]))
     contenido.append(Paragraph(f"Método de pago: {metodo_pago}", styles["Normal"]))
 
@@ -79,7 +96,7 @@ def generar_factura(carrito, total, metodo_pago):
     # -------------------------
     # TABLA PRODUCTOS
     # -------------------------
-    data = [["Producto", "Cantidad", "Precio", "Total"]]
+    data = [["Producto", "Cant.", "Precio", "Total"]]
 
     subtotal = 0
 
@@ -92,19 +109,20 @@ def generar_factura(carrito, total, metodo_pago):
         subtotal += total_linea
 
         data.append([
-            producto,
+            producto.capitalize(),
             str(cantidad),
             f"₡{precio}",
             f"₡{total_linea}"
         ])
 
-    tabla = Table(data)
+    tabla = Table(data, hAlign='LEFT')
 
     tabla.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.black),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("GRID", (0, 0), (-1, -1), 1, colors.grey),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
         ("ALIGN", (1, 1), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
     ]))
 
     contenido.append(tabla)
@@ -119,30 +137,35 @@ def generar_factura(carrito, total, metodo_pago):
 
     contenido.append(Paragraph(f"Subtotal: ₡{round(subtotal,2)}", styles["Normal"]))
     contenido.append(Paragraph(f"IVA (13%): ₡{round(iva,2)}", styles["Normal"]))
-    contenido.append(Paragraph(f"<b>Total: ₡{round(total_final,2)}</b>", styles["Heading2"]))
+    contenido.append(Paragraph(f"<b>TOTAL: ₡{round(total_final,2)}</b>", styles["Heading2"]))
 
     contenido.append(Spacer(1, 20))
 
     # -------------------------
-    # QR
+    # QR (SI EXISTE LIBRERÍA)
     # -------------------------
-    texto_qr = f"Factura {numero_factura} - Total ₡{round(total_final,2)}"
-    ruta_qr = generar_qr(texto_qr)
+    ruta_qr = generar_qr(f"{numero_factura} | ₡{round(total_final,2)}")
 
-    contenido.append(Image(ruta_qr, width=1.5*inch, height=1.5*inch))
+    if ruta_qr and os.path.exists(ruta_qr):
+        contenido.append(Image(ruta_qr, width=1.5*inch, height=1.5*inch))
 
     contenido.append(Spacer(1, 10))
 
     # -------------------------
-    # LEYENDA LEGAL
+    # LEYENDA LEGAL (CR)
     # -------------------------
     contenido.append(Paragraph(
-        "Este documento es una representación gráfica de una factura electrónica.",
+        "Documento conforme a la normativa tributaria vigente en Costa Rica.",
         styles["Normal"]
     ))
 
     contenido.append(Paragraph(
-        "No válido ante el Ministerio de Hacienda sin firma digital.",
+        "Representación gráfica de comprobante electrónico.",
+        styles["Normal"]
+    ))
+
+    contenido.append(Paragraph(
+        "Para efectos fiscales, debe contar con validación del Ministerio de Hacienda.",
         styles["Normal"]
     ))
 
@@ -153,3 +176,7 @@ def generar_factura(carrito, total, metodo_pago):
     # GENERAR PDF
     # -------------------------
     doc.build(contenido)
+
+    # 🧹 LIMPIAR QR TEMPORAL
+    if ruta_qr and os.path.exists(ruta_qr):
+        os.remove(ruta_qr)
