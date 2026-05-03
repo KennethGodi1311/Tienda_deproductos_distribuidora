@@ -4,7 +4,3 @@ bcrypt
 pandas
 matplotlib
 qrcode[pil]
-secure-smtplib
-twilio
-Pillow
-python-dotenv
