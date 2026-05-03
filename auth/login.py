@@ -5,6 +5,7 @@ import time
 from database.db import conectar
 from utils.email import enviar_codigo
 
+
 def login():
 
     if "auth_mode" not in st.session_state:
@@ -53,20 +54,33 @@ def login():
 
                 hashed_pw, rol = data
 
-                if isinstance(hashed_pw, str):
-                    hashed_pw = hashed_pw.encode()
+                # 🔥 SIEMPRE asegurar string limpio
+                if isinstance(hashed_pw, bytes):
+                    hashed_pw = hashed_pw.decode("utf-8")
 
-                if bcrypt.checkpw(pwd.encode(), hashed_pw):
+                try:
+                    if bcrypt.checkpw(
+                        pwd.encode("utf-8"),
+                        hashed_pw.encode("utf-8")
+                    ):
 
-                    st.session_state["login"] = True
-                    st.session_state["user"] = user
-                    st.session_state["rol"] = rol
+                        st.session_state["login"] = True
+                        st.session_state["user"] = user
+                        st.session_state["rol"] = rol
 
-                    st.success(f"✔ Bienvenido {user}")
-                    st.rerun()
+                        st.session_state["page"] = "inicio"
+                        st.session_state["auth_view"] = None
+                        st.session_state["auth_mode"] = "login"
 
-                else:
-                    st.error("❌ Contraseña incorrecta")
+                        st.success(f"✔ Bienvenido {user}")
+                        st.rerun()
+
+                    else:
+                        st.error("❌ Contraseña incorrecta")
+
+                except ValueError:
+                    st.error("❌ Hash corrupto. Borra usuarios y regístralos de nuevo.")
+                    return
 
         with col2:
             if st.button("📝 Crear cuenta"):
@@ -104,15 +118,12 @@ def login():
 
             correo = data[0]
 
-            # 🔥 GENERAR CÓDIGO
             codigo = str(random.randint(100000, 999999))
 
-            # GUARDAR EN SESIÓN
             st.session_state["codigo"] = codigo
             st.session_state["user_reset"] = user
-            st.session_state["expira"] = time.time() + 300  # 5 min
+            st.session_state["expira"] = time.time() + 300
 
-            # 🔥 ENVIAR EMAIL REAL
             enviado = enviar_codigo(correo, codigo)
 
             if enviado:
@@ -120,14 +131,12 @@ def login():
             else:
                 st.error("❌ Error enviando correo")
 
-        # INPUTS
         codigo_input = st.text_input("🔢 Código recibido")
         nueva_password = st.text_input("🔑 Nueva contraseña", type="password")
         confirmar = st.text_input("🔑 Confirmar contraseña", type="password")
 
         if st.button("✅ Restablecer contraseña"):
 
-            # VALIDAR EXPIRACIÓN
             if time.time() > st.session_state.get("expira", 0):
                 st.error("⏰ El código expiró")
                 return
@@ -140,7 +149,11 @@ def login():
                 st.error("❌ Las contraseñas no coinciden")
                 return
 
-            hashed = bcrypt.hashpw(nueva_password.encode(), bcrypt.gensalt())
+            # 🔥 CLAVE: guardar como STRING (NO bytes)
+            hashed = bcrypt.hashpw(
+                nueva_password.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
 
             conn = conectar()
             cursor = conn.cursor()

@@ -1,6 +1,8 @@
 import streamlit as st
 import os
+import bcrypt
 from database.db import conectar
+
 
 def perfil():
 
@@ -15,9 +17,6 @@ def perfil():
     conn = conectar()
     cursor = conn.cursor()
 
-    # -------------------------
-    # CARGAR DATOS COMPLETOS
-    # -------------------------
     cursor.execute("""
         SELECT username, foto, nombre, correo, telefono, direccion, edad
         FROM usuarios
@@ -48,7 +47,7 @@ def perfil():
     st.divider()
 
     # -------------------------
-    # DATOS PERSONALES
+    # DATOS
     # -------------------------
     st.subheader("📋 Información personal")
 
@@ -67,7 +66,7 @@ def perfil():
     st.divider()
 
     # -------------------------
-    # CONTRASEÑA
+    # PASSWORD
     # -------------------------
     st.subheader("🔐 Seguridad")
 
@@ -98,20 +97,28 @@ def perfil():
                     f.write(nueva_foto.read())
 
             # -------------------------
-            # VALIDACIONES
+            # PASSWORD (CORREGIDO 🔥)
             # -------------------------
             if nueva_password:
+
                 if nueva_password != confirmar_password:
                     st.error("❌ Las contraseñas no coinciden")
                     return
+
+                hashed = bcrypt.hashpw(
+                    nueva_password.encode("utf-8"),
+                    bcrypt.gensalt()
+                ).decode("utf-8")
 
                 cursor.execute("""
                     UPDATE usuarios
                     SET password=?
                     WHERE username=?
-                """, (nueva_password, usuario))
+                """, (hashed, usuario))
 
-            # VALIDAR EMAIL simple
+            # -------------------------
+            # EMAIL VALIDATION
+            # -------------------------
             if nuevo_correo and "@" not in nuevo_correo:
                 st.error("❌ Correo inválido")
                 return
@@ -137,7 +144,6 @@ def perfil():
             conn.commit()
             conn.close()
 
-            # actualizar sesión
             st.session_state["user"] = nuevo_username
 
             st.success("✅ Perfil actualizado correctamente")
@@ -146,11 +152,5 @@ def perfil():
         except Exception as e:
             st.error(f"❌ Error al guardar: {e}")
 
-    # -------------------------
-    # ⚖️ AVISO LEGAL
-    # -------------------------
     st.markdown("---")
-    st.caption("""
-    ⚖️ Los datos personales se utilizan únicamente para la gestión de compras y facturación.
-    El usuario puede solicitar la modificación o eliminación de sus datos conforme a la normativa vigente.
-    """)
+    st.caption("⚖️ Datos protegidos y usados solo para gestión del sistema")

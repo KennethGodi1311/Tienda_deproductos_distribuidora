@@ -7,13 +7,14 @@ from datetime import datetime
 def conectar():
     return sqlite3.connect("tienda.db", check_same_thread=False)
 
+
 # =========================
-# MIGRACIONES (🔥 CLAVE)
+# MIGRACIONES SEGURAS
 # =========================
 def agregar_columna_si_no_existe(cursor, tabla, columna_def):
     try:
         cursor.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna_def}")
-    except:
+    except sqlite3.OperationalError:
         pass
 
 
@@ -31,14 +32,14 @@ def init_db():
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
-        password BLOB,
+        password TEXT,
         rol TEXT,
         fecha_creacion TEXT,
         activo INTEGER DEFAULT 1
     )
     """)
 
-    # 🔥 PERFIL COMPLETO
+    # 🔥 MIGRACIONES CORRECTAS
     agregar_columna_si_no_existe(cursor, "usuarios", "foto TEXT")
     agregar_columna_si_no_existe(cursor, "usuarios", "nombre TEXT")
     agregar_columna_si_no_existe(cursor, "usuarios", "correo TEXT")
@@ -46,9 +47,8 @@ def init_db():
     agregar_columna_si_no_existe(cursor, "usuarios", "direccion TEXT")
     agregar_columna_si_no_existe(cursor, "usuarios", "edad INTEGER")
 
-
     # =========================
-    # PRODUCTOS (MEJORADO 🔥)
+    # PRODUCTOS
     # =========================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS productos (
@@ -58,12 +58,11 @@ def init_db():
         categoria TEXT,
         precio REAL,
         stock INTEGER,
-        imagen TEXT, -- 🔥 ruta o URL de imagen
+        imagen TEXT,
         fecha_creacion TEXT,
         activo INTEGER DEFAULT 1
     )
     """)
-    
 
     # =========================
     # VENTAS
@@ -79,7 +78,7 @@ def init_db():
     """)
 
     # =========================
-    # FACTURAS (LEGAL 🔥)
+    # FACTURAS
     # =========================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS facturas (
@@ -160,7 +159,6 @@ def eliminar_producto(nombre):
     conn = conectar()
     cursor = conn.cursor()
 
-    # 🔥 Soft delete (legalmente mejor)
     cursor.execute("""
         UPDATE productos SET activo = 0 WHERE nombre=?
     """, (nombre,))
