@@ -3,6 +3,7 @@ from datetime import datetime
 from utils.factura import generar_factura
 from database.db import guardar_venta
 
+
 def pago():
     """
     Vista de pago del sistema.
@@ -26,10 +27,13 @@ def pago():
     # -------------------------
     # CALCULAR TOTAL REAL
     # -------------------------
-    total = sum(
+    subtotal = sum(
         item["precio"] * item["cantidad"]
         for item in st.session_state["carrito"]
     )
+
+    iva = subtotal * 0.13
+    total = subtotal + iva
 
     # -------------------------
     # RESUMEN DE COMPRA
@@ -42,7 +46,10 @@ def pago():
             f"→ ₡{item['precio'] * item['cantidad']}"
         )
 
-    st.success(f"Total: ₡{total}")
+    st.info(f"Subtotal: ₡{round(subtotal,2)}")
+    st.info(f"IVA (13%): ₡{round(iva,2)}")
+    st.success(f"Total: ₡{round(total,2)}")
+
     st.divider()
 
     # -------------------------
@@ -84,7 +91,7 @@ def pago():
     # -------------------------
     if st.button("✅ Confirmar pago"):
 
-        # VALIDACIONES SEGÚN MÉTODO
+        # VALIDACIONES
         if metodo == "Tarjeta":
             if not nombre or not tarjeta or not fecha or not cvv:
                 st.error("Completa todos los datos de la tarjeta")
@@ -98,17 +105,21 @@ def pago():
         with st.spinner("Procesando pago..."):
 
             # -------------------------
-            # GUARDAR VENTA
+            # GUARDAR VENTA EN BD
             # -------------------------
             guardar_venta(st.session_state["carrito"])
 
             # -------------------------
-            # GENERAR FACTURA
+            # GENERAR FACTURA (FIX 🔥)
             # -------------------------
-            generar_factura(st.session_state["carrito"], total)
+            generar_factura(
+                st.session_state["carrito"],
+                total,
+                metodo   # 👈 AQUÍ ESTABA EL ERROR
+            )
 
             # -------------------------
-            # MENSAJE SEGÚN MÉTODO
+            # MENSAJES
             # -------------------------
             if metodo == "Tarjeta":
                 st.success("💳 Pago con tarjeta aprobado")
@@ -130,13 +141,16 @@ def pago():
             # -------------------------
             # DESCARGAR FACTURA
             # -------------------------
-            with open("factura.pdf", "rb") as file:
-                st.download_button(
-                    label="📄 Descargar factura",
-                    data=file,
-                    file_name="factura.pdf",
-                    mime="application/pdf"
-                )
+            try:
+                with open("factura.pdf", "rb") as file:
+                    st.download_button(
+                        label="📄 Descargar factura",
+                        data=file,
+                        file_name="factura.pdf",
+                        mime="application/pdf"
+                    )
+            except:
+                st.warning("No se pudo generar la factura")
 
     # -------------------------
     # VOLVER

@@ -220,5 +220,3 @@ elif page == "inventario":
 elif page == "ventas":
     st.title("💰 Ventas (admin)")
     st.info("Próximamente...")
-
-    
