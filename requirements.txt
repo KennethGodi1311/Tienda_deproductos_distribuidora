@@ -4,4 +4,3 @@ bcrypt
 pandas
 matplotlib
 qrcode[pil]
-plotly
